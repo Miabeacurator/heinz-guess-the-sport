@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guess the Sport — Heinz</title>
+<style>
+:root{
+  --cream:#ECDCC3;
+  --ink:#2A1E18;
+  --tomato:#A32B1E;
+  --leaf:#4E6B3A;
+  --muted:#9C8E7C;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--cream);
+  color:var(--ink);
+  font-family:"Optima","Palatino",Georgia,"Songti SC",serif;
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+.stage{height:100vh;display:grid;grid-template-rows:auto 1fr auto;padding:3vh 4vw}
+
+/* ---------- top ---------- */
+.bar{display:flex;justify-content:space-between;align-items:baseline}
+.brand{font-size:clamp(13px,1.5vw,20px);letter-spacing:.22em;text-transform:uppercase;
+  color:var(--tomato);font-weight:600}
+.count{font-size:clamp(13px,1.5vw,20px);letter-spacing:.14em;color:var(--muted);
+  font-variant-numeric:tabular-nums}
+
+/* ---------- main ---------- */
+.main{display:flex;align-items:center;justify-content:center;gap:clamp(40px,9vw,170px);
+  position:relative}
+
+/* ---- left: tomato + answer stacked ---- */
+.left{display:flex;flex-direction:column;align-items:center;gap:2.4vh}
+
+.frame{
+  width:min(30vw,42vh);
+  aspect-ratio:1;
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.frame img{
+  width:100%;height:100%;object-fit:contain;
+  filter:drop-shadow(0 24px 30px rgba(90,30,15,.26));
+  transform-origin:50% 55%;
+}
+
+/* idle: barely-there breathing */
+.frame.idle img{animation:breathe 5s ease-in-out infinite}
+@keyframes breathe{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-1%) scale(1.008)}
+}
+
+/* reveal: quick anticipation dip, then a decisive rise and settle */
+.frame.pop img{animation:reveal 1.5s cubic-bezier(.22,1,.32,1) both}
+@keyframes reveal{
+  0%  {transform:translateY(0)      scale(1)    rotate(0deg)}
+  14% {transform:translateY(1.6%)   scale(.965) rotate(-1.6deg)}
+  46% {transform:translateY(-4.2%)  scale(1.10) rotate(1.4deg)}
+  68% {transform:translateY(-1.4%)  scale(1.045) rotate(-.5deg)}
+  86% {transform:translateY(-2.4%)  scale(1.068) rotate(.2deg)}
+  100%{transform:translateY(-2%)    scale(1.06) rotate(0deg)}
+}
+/* shadow reacts to the lift */
+.frame.pop img{will-change:transform,filter}
+.frame.pop{animation:shadowlift 1.5s cubic-bezier(.22,1,.32,1) both}
+@keyframes shadowlift{
+  0%{filter:none}
+  46%{filter:drop-shadow(0 44px 40px rgba(90,30,15,.16))}
+  100%{filter:drop-shadow(0 34px 34px rgba(90,30,15,.2))}
+}
+
+/* a ring pulses outward once — reads as impact */
+.frame::before{
+  content:"";position:absolute;left:50%;top:50%;
+  width:78%;aspect-ratio:1;border-radius:50%;
+  border:2px solid rgba(163,43,30,.5);
+  transform:translate(-50%,-50%) scale(.72);
+  opacity:0;pointer-events:none;
+}
+.frame.pop::before{animation:ring 1.1s .16s cubic-bezier(.16,.8,.3,1) both}
+@keyframes ring{
+  0%{opacity:.75;transform:translate(-50%,-50%) scale(.72)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.42)}
+}
+
+.placeholder{
+  width:100%;height:100%;border:2px dashed rgba(163,43,30,.4);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;text-align:center;padding:2rem;
+  color:var(--tomato);font-size:clamp(11px,1.2vw,15px);line-height:1.7;
+}
+
+/* answer sits under the tomato, in its own column — no overlap */
+.answer{
+  text-align:center;
+  opacity:0;visibility:hidden;transform:translateY(18px);
+  transition:opacity .45s .18s ease,transform .6s .18s cubic-bezier(.2,.9,.3,1),visibility 0s .5s;
+}
+.answer.show{
+  opacity:1;visibility:visible;transform:none;
+  transition:opacity .45s .18s ease,transform .6s .18s cubic-bezier(.2,.9,.3,1),visibility 0s;
+}
+.answer.instant{transition:none !important}
+.answer .sport{font-size:clamp(24px,4vw,60px);font-style:italic;font-weight:600;
+  color:var(--tomato);line-height:1}
+.answer .zh{margin-top:.4rem;font-size:clamp(11px,1.25vw,18px);letter-spacing:.3em;
+  color:var(--leaf)}
+
+/* ---- right: member photo + name beside it ---- */
+.member{
+  display:flex;align-items:center;gap:1.6vw;
+  opacity:0;visibility:hidden;transform:translateX(38px) scale(.95);
+  transition:opacity .55s .45s ease,transform .8s .45s cubic-bezier(.2,.9,.3,1),visibility 0s 1s;
+}
+.member.show{
+  opacity:1;visibility:visible;transform:none;
+  transition:opacity .55s .45s ease,transform .8s .45s cubic-bezier(.2,.9,.3,1),visibility 0s;
+}
+.member.instant{transition:none !important}
+.member .pic{width:min(26vw,52vh);flex:none}
+.member .pic img{width:100%;display:block;
+  filter:drop-shadow(0 26px 34px rgba(60,20,10,.26))}
+.member .ph{
+  width:100%;aspect-ratio:3/4;border-radius:12px;border:2px dashed rgba(163,43,30,.35);
+  display:flex;align-items:center;justify-content:center;text-align:center;padding:1.5rem;
+  color:var(--tomato);font-size:clamp(10px,1.1vw,14px);line-height:1.7;
+}
+/* name: vertical, centred beside the photo */
+.member .name{
+  writing-mode:vertical-rl;
+  font-size:clamp(14px,1.7vw,26px);
+  letter-spacing:.34em;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap;
+}
+
+/* ---------- bottom ---------- */
+.foot{display:flex;justify-content:space-between;align-items:flex-end;gap:2rem}
+.prompt{font-size:clamp(15px,2vw,29px);font-style:italic}
+.prompt .dim{color:var(--muted);font-style:normal;font-size:.6em;letter-spacing:.12em;
+  display:block;margin-top:.45rem}
+.keys{font-size:clamp(10px,1vw,13px);letter-spacing:.1em;color:var(--muted);
+  text-align:right;line-height:1.9}
+kbd{background:rgba(42,30,24,.08);border-radius:4px;padding:2px 7px;
+  font-family:inherit;font-size:.95em}
+
+/* ---------- start screen ---------- */
+.start{
+  position:fixed;inset:0;background:var(--cream);z-index:20;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3vh;text-align:center;padding:6vw;cursor:pointer;
+  transition:opacity .7s ease,visibility 0s .7s;
+}
+.start.hide{opacity:0;visibility:hidden;pointer-events:none}
+.start .corner{
+  position:absolute;top:3vh;left:4vw;
+  font-size:clamp(13px,1.5vw,20px);letter-spacing:.22em;text-transform:uppercase;
+  color:var(--tomato);font-weight:600;
+}
+.start h1{
+  font-size:clamp(34px,6.2vw,104px);font-style:italic;font-weight:600;
+  color:var(--tomato);line-height:1.06;letter-spacing:-.01em;
+}
+.start .row{display:flex;gap:clamp(10px,1.6vw,26px);margin-top:1vh}
+.start .row img{
+  width:clamp(52px,6.4vw,104px);height:auto;
+  filter:drop-shadow(0 10px 16px rgba(90,30,15,.22));
+  opacity:0;transform:translateY(16px) scale(.9);
+  animation:tomIn .7s cubic-bezier(.2,1.2,.35,1) forwards;
+}
+.start .row img:nth-child(1){animation-delay:.15s}
+.start .row img:nth-child(2){animation-delay:.24s}
+.start .row img:nth-child(3){animation-delay:.33s}
+.start .row img:nth-child(4){animation-delay:.42s}
+.start .row img:nth-child(5){animation-delay:.51s}
+.start .row img:nth-child(6){animation-delay:.60s}
+@keyframes tomIn{to{opacity:1;transform:none}}
+
+.start .cta{
+  margin-top:2vh;
+  font-size:clamp(13px,1.5vw,21px);letter-spacing:.2em;text-transform:uppercase;
+  color:var(--tomato);border:1.5px solid var(--tomato);
+  padding:.85em 2.2em;border-radius:999px;
+  transition:background .25s ease,color .25s ease;
+  animation:pulse 2.6s ease-in-out infinite;
+}
+.start:hover .cta{background:var(--tomato);color:var(--cream)}
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.035)}
+}
+
+/* tagline */
+.tagline{
+  position:fixed;inset:0;background:var(--cream);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2.2rem;text-align:center;padding:6vw;
+  opacity:0;pointer-events:none;transition:opacity .6s ease;
+}
+.tagline.show{opacity:1;pointer-events:auto}
+.tagline p{font-size:clamp(26px,4.2vw,66px);font-style:italic;line-height:1.35;
+  color:var(--tomato);max-width:16em}
+.tagline small{font-size:clamp(11px,1.25vw,16px);letter-spacing:.22em;
+  text-transform:uppercase;color:var(--muted)}
+
+@media (max-width:980px){
+  .main{flex-direction:column;gap:3vh}
+  .frame{width:56vw}
+  .member .pic{width:44vw}
+  .member .name{writing-mode:horizontal-tb;letter-spacing:.2em}
+}
+</style>
+</head>
+<body>
+
+<div class="start" id="start">
+  <div class="corner">Heinz</div>
+  <h1>Guess the Sport</h1>
+  <div class="row">
+    <img src="assets/tomato_sq/fencing.png" alt="">
+    <img src="assets/tomato_sq/table-tennis.png" alt="">
+    <img src="assets/tomato_sq/skateboard.png" alt="">
+    <img src="assets/tomato_sq/volleyball.png" alt="">
+    <img src="assets/tomato_sq/archery.png" alt="">
+    <img src="assets/tomato_sq/taekwondo.png" alt="">
+  </div>
+  <div class="cta">Click to start</div>
+</div>
+
+<div class="stage">
+  <div class="bar">
+    <div class="brand">Guess the sport</div>
+    <div class="count"><span id="idx">1</span> / <span id="total">6</span></div>
+  </div>
+
+  <div class="main">
+    <div class="left">
+      <div class="frame idle" id="frame">
+        <img id="tomato" alt="" style="display:none">
+        <div id="tomatoPh" class="placeholder"></div>
+      </div>
+      <div class="answer" id="answer">
+        <div class="sport" id="sportEn"></div>
+        <div class="zh" id="sportZh"></div>
+      </div>
+    </div>
+
+    <div class="member" id="member">
+      <div class="pic">
+        <img id="memberImg" alt="" style="display:none">
+        <div id="memberPh" class="ph"></div>
+      </div>
+      <div class="name" id="memberName"></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="prompt" id="prompt">
+      Which sport is this tomato playing?
+      <span class="dim">Take a guess before we reveal</span>
+    </div>
+    <div class="keys">
+      <kbd>Space</kbd> reveal &nbsp;·&nbsp; <kbd>→</kbd> next &nbsp;·&nbsp; <kbd>←</kbd> back<br>
+      <kbd>F</kbd> fullscreen &nbsp;·&nbsp; <kbd>R</kbd> back to start
+    </div>
+  </div>
+</div>
+
+<div class="tagline" id="tagline">
+  <p>“The tomatoes that want to win<br>are all in Heinz.”</p>
+  <small>想赢的番茄都在亨氏里</small>
+</div>
+
+<script>
+/* ============================================================
+   EDIT HERE — 6 members, 6 sports.
+   Tomatoes: assets/tomato_sq/   Members: assets/members/
+   ============================================================ */
+const ROUNDS = [
+  { en:"Fencing",      zh:"击剑",   member:"Pam",    tomato:"assets/tomato_sq/fencing.png",      photo:"assets/members_norm/member1.png" },
+  { en:"Table tennis", zh:"乒乓球", member:"Cassic", tomato:"assets/tomato_sq/table-tennis.png", photo:"assets/members_norm/member2.png" },
+  { en:"Skateboard",   zh:"滑板",   member:"Sia",    tomato:"assets/tomato_sq/skateboard.png",   photo:"assets/members_norm/member3.png" },
+  { en:"Volleyball",   zh:"排球",   member:"Rupal",  tomato:"assets/tomato_sq/volleyball.png",   photo:"assets/members_norm/member4.png" },
+  { en:"Archery",      zh:"射箭",   member:"Mia",    tomato:"assets/tomato_sq/archery.png",      photo:"assets/members_norm/member5.png" },
+  { en:"Taekwondo",    zh:"跆拳道", member:"Weibo",  tomato:"assets/tomato_sq/taekwondo.png",    photo:"assets/members_norm/member6.png" },
+];
+/* ========================================================== */
+
+let i = 0, revealed = false, started = false;
+const $ = id => document.getElementById(id);
+const frame = $("frame"), tomato = $("tomato"), tomatoPh = $("tomatoPh");
+const memberImg = $("memberImg"), memberPh = $("memberPh");
+
+function startGame(){
+  if(started) return;
+  started = true;
+  $("start").classList.add("hide");
+  i = 0; render();
+}
+function backToStart(){
+  started = false;
+  $("start").classList.remove("hide");
+  i = 0; render();
+}
+
+function setImg(imgEl, phEl, src, phText){
+  imgEl.style.display = "none";
+  phEl.style.display = "flex";
+  phEl.textContent = phText;
+  if(!src) return;
+  const probe = new Image();
+  probe.onload = () => { imgEl.src = src; imgEl.style.display = "block"; phEl.style.display = "none"; };
+  probe.src = src;
+}
+
+function render(){
+  const r = ROUNDS[i];
+  revealed = false;
+  $("idx").textContent = i + 1;
+  $("total").textContent = ROUNDS.length;
+
+  frame.className = "frame idle";
+  setImg(tomato, tomatoPh, r.tomato, "tomato\n" + r.tomato);
+
+  const mem = $("member"), ans = $("answer");
+  mem.classList.add("instant"); ans.classList.add("instant");
+  mem.classList.remove("show"); ans.classList.remove("show");
+  void ans.offsetWidth;
+  mem.classList.remove("instant"); ans.classList.remove("instant");
+
+  setImg(memberImg, memberPh, r.photo, "AI photo\n" + r.photo);
+  $("memberName").textContent = r.member;
+  $("sportEn").textContent = r.en;
+  $("sportZh").textContent = r.zh;
+
+  $("prompt").innerHTML = 'Which sport is this tomato playing?<span class="dim">Take a guess before we reveal</span>';
+  $("tagline").classList.remove("show");
+}
+
+function reveal(){
+  if(revealed) return;
+  revealed = true;
+  frame.className = "frame pop";
+  $("answer").classList.add("show");
+  $("member").classList.add("show");
+  $("prompt").innerHTML = 'And here is our version.<span class="dim">One of us, one of the 34</span>';
+}
+
+function next(){
+  if(!revealed){ reveal(); return; }
+  if(i < ROUNDS.length - 1){ i++; render(); }
+  else { $("tagline").classList.add("show"); }
+}
+function back(){
+  if($("tagline").classList.contains("show")){ $("tagline").classList.remove("show"); return; }
+  if(i > 0){ i--; render(); }
+}
+
+document.addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+  if(k === "f"){
+    document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    return;
+  }
+  if(k === "r"){ backToStart(); return; }
+  if(!started){
+    if(e.key === " " || e.key === "Enter" || e.key === "ArrowRight"){ e.preventDefault(); startGame(); }
+    return;
+  }
+  if(e.key === " " || e.key === "Enter"){ e.preventDefault(); revealed ? next() : reveal(); }
+  else if(e.key === "ArrowRight"){ e.preventDefault(); next(); }
+  else if(e.key === "ArrowLeft"){ e.preventDefault(); back(); }
+});
+document.addEventListener("click", () => {
+  if(!started){ startGame(); return; }
+  revealed ? next() : reveal();
+});
+
+render();
+</script>
+</body>
+</html>

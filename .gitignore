@@ -1,0 +1,11 @@
+# source material — not needed by the deployed page
+assets/sports/
+assets/sports_nolabel/
+assets/sports_circle/
+assets/tomato/
+assets/members/
+assets/draft/
+assets/animation_topys.gif
+assets/topys_*.jpg
+.DS_Store
+**/.DS_Store
